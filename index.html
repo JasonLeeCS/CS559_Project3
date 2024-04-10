@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What's does it take to get a 4 around here</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            background-color: #c8c8cc;
+        }
+    </style>
+</head>
+<body>
+    <!-- Control sliders and buttons -->
+    <label for="speedSlider">Speed:</label>
+    <input type="range" id="speedSlider" min="0.001" max="0.01" step="0.001" value="0.005">
+    <span id="speedValue">0.001</span>
+
+    <br><br>
+
+    <label for="lissajousRotationSlider">Rotation:</label>
+    <input type="range" id="lissajousRotationSlider" min="0" max="360" step="1" value="0">
+    <span id="lissajousRotationValue">0</span>
+    <br><br>
+
+
+    <label for="swingSpeedSlider">Swing Speed:</label>
+    <input type="range" id="swingSpeedSlider" min="10" max="100" step="10" value="10">
+    <span id="swingSpeedValue">10</span>
+
+    <br><br>
+
+    <button id="addCabinButton">Add Cabin</button>
+    <button id="removeCabinButton">Remove Cabin</button>
+    <span id="cabinCounter">Current Cabins: 6</span>
+    <br><br>
+    <button onClick="window.location.reload();">Refresh Page</button>
+
+    <br><br>
+
+    <canvas id="ferrisWheelCanvas" width="400" height="400"></canvas>
+
+    <script>
+      const canvas = document.getElementById('ferrisWheelCanvas');
+      const ctx = canvas.getContext('2d');
+      const speedSlider = document.getElementById('speedSlider');
+      const speedValue = document.getElementById('speedValue');
+      const swingSpeedSlider = document.getElementById('swingSpeedSlider');
+      const swingSpeedValue = document.getElementById('swingSpeedValue');
+      const lissajousRotationSlider = document.getElementById('lissajousRotationSlider');
+      const lissajousRotationValue = document.getElementById('lissajousRotationValue');
+      const addCabinButton = document.getElementById('addCabinButton');
+      const removeCabinButton = document.getElementById('removeCabinButton');
+      const cabinCounter = document.getElementById('cabinCounter');
+      
+
+      let rotationAngle = 0;
+      let rotationSpeed = parseFloat(speedSlider.value);
+      let numCabins = 1; // Initial number of cabins
+      let cabinSwingAmplitude = 7; 
+      let swingSpeed = parseFloat(swingSpeedSlider.value);
+      let lissajousRotation = 0; // Initial rotation in radians
+
+  
+      const A = 80;
+      const B = 80;
+      const a = 3;
+      const b = 2;
+      const delta = Math.PI / 2;
+  
+      function drawFerrisWheel() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw mast
+            ctx.fillStyle = 'gray';
+            ctx.fillRect(195, 195, 10, 150);
+
+            // Draw base
+            ctx.fillStyle = 'red';
+            ctx.fillRect(150, 350, 100, 10);
+
+            // Draw Lissajous curve with rotation
+            ctx.strokeStyle = 'green';
+            ctx.beginPath();
+            for (let i = 0; i < 2 * Math.PI; i += 0.01) {
+                const xWithoutRotation = A * Math.sin(a * i + delta);
+                const yWithoutRotation = B * Math.sin(b * i);
+                // Lets cabin go along the curve regardless of its orientation
+                const rotatedX = xWithoutRotation * Math.cos(lissajousRotation) - yWithoutRotation * Math.sin(lissajousRotation) + 200;
+                const rotatedY = xWithoutRotation * Math.sin(lissajousRotation) + yWithoutRotation * Math.cos(lissajousRotation) + 200;
+                
+                ctx.lineTo(rotatedX, rotatedY);
+            }
+            ctx.stroke();
+
+            for (let i = 0; i < numCabins; i++) {
+                const cabinAngle = i * (2 * Math.PI / numCabins) + rotationAngle;
+                const xWithoutRotationCabin = A * Math.sin(a * cabinAngle + delta);
+                const yWithoutRotationCabin = B * Math.sin(b * cabinAngle) + cabinSwingAmplitude * Math.sin(swingSpeed * cabinAngle);
+
+                const lx = xWithoutRotationCabin * Math.cos(lissajousRotation) - yWithoutRotationCabin * Math.sin(lissajousRotation) + 200;
+                const ly = xWithoutRotationCabin * Math.sin(lissajousRotation) + yWithoutRotationCabin * Math.cos(lissajousRotation) + 200;
+
+                ctx.fillStyle = 'blue';
+                ctx.fillRect(lx - 15, ly - 15, 30, 30);
+            }
+
+            // Update the cabin counter
+            cabinCounter.textContent = `Current Cabins: ${numCabins}`;
+        }
+
+
+
+        // Function to update rotation speed
+        function updateSpeedValue() {
+            speedValue.textContent = speedSlider.value;
+            rotationSpeed = parseFloat(speedSlider.value);
+        }
+
+        // Function to update swing speed
+        function updateSwingSpeedValue() {
+            swingSpeedValue.textContent = swingSpeedSlider.value;
+            swingSpeed = parseFloat(swingSpeedSlider.value);
+        }
+
+        // Function to add a cabin
+        function addCabin() {
+            numCabins++;
+            drawFerrisWheel();
+        }
+
+        // Function to remove a cabin
+        function removeCabin() {
+            if (numCabins > 1) {
+                numCabins--;
+                drawFerrisWheel();
+            }
+        }
+
+        // Event listener for speed slider
+        speedSlider.addEventListener('input', () => {
+            updateSpeedValue();
+        });
+
+        // Event listener for swing speed slider
+        swingSpeedSlider.addEventListener('input', () => {
+            updateSwingSpeedValue();
+        });
+
+        // Event listener for the "Add Cabin" button
+        addCabinButton.addEventListener('click', () => {
+            addCabin();
+        });
+
+        // Event listener for the "Remove Cabin" button
+        removeCabinButton.addEventListener('click', () => {
+            removeCabin();
+        });
+
+        lissajousRotationSlider.addEventListener('input', () => {
+        lissajousRotationValue.textContent = lissajousRotationSlider.value;
+        lissajousRotation = parseFloat(lissajousRotationSlider.value) * (Math.PI / 180); // Radian conversion
+
+        });
+
+
+        // Animation loop
+        function animate() {
+        rotationAngle += rotationSpeed;
+        if (rotationAngle >= 2 * Math.PI) {
+            rotationAngle -= 2 * Math.PI;
+        }
+        drawFerrisWheel();
+        requestAnimationFrame(animate);
+    }
+
+    updateSpeedValue();
+    updateSwingSpeedValue();
+    drawFerrisWheel();
+    animate();
+    </script>
+</body>
+</html>

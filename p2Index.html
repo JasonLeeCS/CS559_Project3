@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ferris Wheel Simulation</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <label for="speedSlider">Speed:</label>
+    <input type="range" id="speedSlider" min="1" max="10" value="0.5">
+    <span id="speedValue">1</span>
+
+    <br><br>
+
+    <label for="swingSpeedSlider">Swing Speed:</label>
+    <input type="range" id="swingSpeedSlider" min="0.01" max="0.1" step="0.01" value="0.02">
+    <span id="swingSpeedValue">0.02</span>
+
+    <br><br>
+
+    <button id="addCabinButton">Add Cabin</button>
+    <button id="removeCabinButton">Remove Cabin</button>
+    <span id="cabinCounter">Current Cabins: 6</span>
+    <br><br>
+    <button onClick="window.location.reload();">Refresh Page</button>
+
+    <br><br>
+
+    <canvas id="ferrisWheelCanvas" width="400" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('ferrisWheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const swingSpeedSlider = document.getElementById('swingSpeedSlider');
+        const swingSpeedValue = document.getElementById('swingSpeedValue');
+        const addCabinButton = document.getElementById('addCabinButton');
+        const removeCabinButton = document.getElementById('removeCabinButton');
+        const cabinCounter = document.getElementById('cabinCounter');
+        
+        let rotationAngle = 0;
+        let rotationSpeed = parseFloat(speedSlider.value);
+        let numCabins = 6; // Initial number of cabins
+        let cabinSwingAmplitude = 7; // Amplitude of cabin swing in pixels
+        let cabinSwingFrequency = 0.02; // Frequency of cabin swing in radians per frame
+        let cabinSwingPhase = 0; // Initial phase of cabin swing
+        let swingSpeed = parseFloat(swingSpeedSlider.value);
+
+        // Function to draw the Ferris wheel
+        function drawFerrisWheel() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save(); // Save the current canvas state
+
+            // Draw mast
+            ctx.fillStyle = 'gray';
+            ctx.fillRect(195, 195, 10, 150);
+
+            // Draw base
+            ctx.fillStyle = 'red';
+            ctx.fillRect(150, 350, 100, 10);
+
+            // Draw the cabins, axles, and connecting ring
+            for (let i = 0; i < numCabins; i++) {
+                const cabinAngle = (i * (360 / numCabins)) + rotationAngle;
+
+                // Calculate axle position
+                const axleX = 200 + 80 * Math.cos(cabinAngle * (Math.PI / 180));
+                const axleY = 200 + 80 * Math.sin(cabinAngle * (Math.PI / 180));
+
+                ctx.fillStyle = 'gray';
+                ctx.fillRect(axleX - 5, axleY - 5, 10, 10);
+
+                // Calculate spoke end position
+                const spokeEndX = 200 - 100 * Math.cos(cabinAngle * (Math.PI / 180));
+                const spokeEndY = 200 - 100 * Math.sin(cabinAngle * (Math.PI / 180));
+
+                ctx.strokeStyle = 'gray';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(axleX, axleY);
+                ctx.lineTo(spokeEndX, spokeEndY);
+                ctx.stroke();
+
+                // Calculate cabin position
+                const swingOffsetY = cabinSwingAmplitude * Math.sin(cabinSwingFrequency * cabinAngle + cabinSwingPhase);
+                const cabinX = 200 + 120 * Math.cos(cabinAngle * (Math.PI / 180));
+                const cabinY = 200 + 120 * Math.sin(cabinAngle * (Math.PI / 180)) + swingOffsetY;
+
+                // Ring connecting cabins
+                ctx.strokeStyle = 'gray';
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.arc(200, 200, 100, 0, 2 * Math.PI);
+                ctx.stroke();
+
+                ctx.fillStyle = 'blue';
+                ctx.fillRect(cabinX - 15, cabinY - 15, 30, 30);
+            }
+
+            ctx.restore(); // Restore the previously saved canvas state
+
+            // Update the cabin counter
+            cabinCounter.textContent = `Current Cabins: ${numCabins}`;
+        }
+
+        // Function to update rotation speed
+        function updateSpeedValue() {
+            speedValue.textContent = speedSlider.value;
+            rotationSpeed = parseFloat(speedSlider.value);
+        }
+
+        // Function to update swing speed
+        function updateSwingSpeedValue() {
+            swingSpeedValue.textContent = swingSpeedSlider.value;
+            swingSpeed = parseFloat(swingSpeedSlider.value);
+        }
+
+        // Function to add a cabin
+        function addCabin() {
+            numCabins++;
+            drawFerrisWheel();
+        }
+
+        // Function to remove a cabin
+        function removeCabin() {
+            if (numCabins > 1) {
+                numCabins--;
+                drawFerrisWheel();
+            }
+        }
+
+        // Event listener for speed slider
+        speedSlider.addEventListener('input', () => {
+            updateSpeedValue();
+        });
+
+        // Event listener for swing speed slider
+        swingSpeedSlider.addEventListener('input', () => {
+            updateSwingSpeedValue();
+        });
+
+        // Event listener for the "Add Cabin" button
+        addCabinButton.addEventListener('click', () => {
+            addCabin();
+        });
+
+        // Event listener for the "Remove Cabin" button
+        removeCabinButton.addEventListener('click', () => {
+            removeCabin();
+        });
+
+        // Animation loop
+        function animate() {
+            rotationAngle += rotationSpeed;
+            if (rotationAngle >= 360) {
+                rotationAngle -= 360;
+            }
+
+            cabinSwingPhase += swingSpeed; // Adjust the swing phase to control cabin swing speed
+            drawFerrisWheel();
+            requestAnimationFrame(animate);
+        }
+
+        updateSpeedValue();
+        updateSwingSpeedValue();
+        drawFerrisWheel();
+        animate();
+    </script>
+</body>
+</html>

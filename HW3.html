@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="./HW3_files/gl-matrix.js.download"></script><style type="text/css" id="operaUserStyle"></style>
+
+    <title>Ferris Wheel Simulation</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+<style type="text/css"></style></head>
+<body data-new-gr-c-s-check-loaded="14.1135.0" data-gr-ext-installed="">
+    <label for="speedSlider">Speed Control:</label>
+    <input type="range" id="speedSlider" min="1" max="10" value="1">
+    <span id="speedValue">1</span>
+
+    <br><br>
+
+    <button id="addCabinButton">Add Cabin</button>
+    <button id="removeCabinButton">Remove Cabin</button>
+    <span id="cabinCounter">Current Cabins: 4</span>
+    <br><br>
+    <button onclick="window.location.reload();">Refresh Page</button>
+
+    <br><br>
+
+    <canvas id="ferrisWheelCanvas" width="400" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('ferrisWheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const addCabinButton = document.getElementById('addCabinButton');
+        const removeCabinButton = document.getElementById('removeCabinButton');
+        const cabinCounter = document.getElementById('cabinCounter');
+        
+        let rotationAngle = 0;
+        let rotationSpeed = parseFloat(speedSlider.value);
+        let numCabins = 8; // Initial number of cabins
+        let matrix = mat3.create();
+
+
+        // Function to draw the Ferris wheel
+        function drawFerrisWheel() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let matrix = mat3.create();
+            mat3.translate(matrix, matrix, [200, 200]);
+            mat3.rotate(matrix, matrix, rotationAngle * (Math.PI / 180));
+            mat3.translate(matrix, matrix, [-200, -200]);
+
+            // Apply the transformation for each point
+            function transformPoint(x, y) {
+                let point = vec2.fromValues(x, y);
+                vec2.transformMat3(point, point, matrix);
+                return point;
+            }
+
+            // Draw the main axle or mast
+            ctx.fillStyle = 'gray';
+            ctx.fillRect(195, 195, 10, 150);
+
+            // Draw the Ferris wheel base
+            ctx.fillStyle = 'red';
+            ctx.fillRect(150, 350, 100, 10);
+
+            // Draw the Ferris wheel cabins, axles, and connecting ring
+            for (let i = 0; i < numCabins; i++) {
+                const cabinAngle = (i * (360 / numCabins)) + rotationAngle;
+
+                // Calculate axle position
+                const axleX = 200 + 80 * Math.cos(cabinAngle * (Math.PI / 180));
+                const axleY = 200 + 80 * Math.sin(cabinAngle * (Math.PI / 180));
+
+                let transformedAxle = transformPoint(axleX, axleY);
+                ctx.fillStyle = 'gray';
+                ctx.fillRect(transformedAxle[0] - 5, transformedAxle[1] - 5, 10, 10);
+
+                // Calculate spoke end position
+                const spokeEndX = 200 - 100 * Math.cos(cabinAngle * (Math.PI / 180));
+                const spokeEndY = 200 - 100 * Math.sin(cabinAngle * (Math.PI / 180));
+
+                let transformedSpokeEnd = transformPoint(spokeEndX, spokeEndY);
+                ctx.strokeStyle = 'gray';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(transformedAxle[0], transformedAxle[1]);
+                ctx.lineTo(transformedSpokeEnd[0], transformedSpokeEnd[1]);
+                ctx.stroke();
+
+                // Calculate cabin position
+                const cabinX = 200 + 120 * Math.cos(cabinAngle * (Math.PI / 180));
+                const cabinY = 200 + 120 * Math.sin(cabinAngle * (Math.PI / 180));
+
+                let transformedCabin = transformPoint(cabinX, cabinY);
+                ctx.fillStyle = 'blue';
+                ctx.fillRect(transformedCabin[0] - 15, transformedCabin[1] - 15, 30, 30);
+            }
+
+            // Draw the ring connecting cabins
+            ctx.strokeStyle = 'gray';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.arc(200, 200, 100, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // Update the cabin counter
+            cabinCounter.textContent = `Current Cabins: ${numCabins}`;
+        }
+
+        // Function to update the speed value
+        function updateSpeedValue() {
+            speedValue.textContent = speedSlider.value;
+            rotationSpeed = parseFloat(speedSlider.value);
+        }
+
+        // Function to add a cabin
+        function addCabin() {
+            numCabins++;
+            drawFerrisWheel();
+        }
+
+        // Function to remove a cabin
+        function removeCabin() {
+            if (numCabins > 1) {
+                numCabins--;
+                drawFerrisWheel();
+            }
+        }
+
+        // Event listener for the speed slider
+        speedSlider.addEventListener('input', () => {
+            updateSpeedValue();
+        });
+
+        // Event listener for the "Add Cabin" button
+        addCabinButton.addEventListener('click', () => {
+            addCabin();
+        });
+
+        // Event listener for the "Remove Cabin" button
+        removeCabinButton.addEventListener('click', () => {
+            removeCabin();
+        });
+
+        // Animation loop
+        function animate() {
+            rotationAngle += rotationSpeed;
+            if (rotationAngle >= 360) {
+                rotationAngle -= 360;
+            }
+
+            drawFerrisWheel();
+            requestAnimationFrame(animate);
+        }
+
+        // Initial setup
+        updateSpeedValue();
+        drawFerrisWheel();
+        animate();
+    </script>
+
+
+</body><div id="simplifyJobsContainer" style="position: absolute; top: 0px; left: 0px; width: 0px; height: 0px; overflow: visible; z-index: 2147483647;"><span><template shadowrootmode="open"><link rel="stylesheet" href="chrome-extension://pbanhockgagggenencehbnadejlgchfc/css/styles.css"><style>
+  :host {
+    all: initial;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+    font-family: Palanquin, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(203, 213, 225, 1) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 6px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: rgba(203, 213, 225, 1);
+    border-radius: 3px;
+    border: 0;
+  }
+</style></template></span></div><grammarly-desktop-integration data-grammarly-shadow-root="true"><template shadowrootmode="open"><style>
+      div.grammarly-desktop-integration {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select:none;
+        user-select:none;
+      }
+
+      div.grammarly-desktop-integration:before {
+        content: attr(data-content);
+      }
+    </style><div aria-label="grammarly-integration" role="group" tabindex="-1" class="grammarly-desktop-integration" data-content="{&quot;mode&quot;:&quot;full&quot;,&quot;isActive&quot;:true,&quot;isUserDisabled&quot;:false}"></div></template></grammarly-desktop-integration></html>
